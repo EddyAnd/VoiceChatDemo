@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">VocieChatDemo</string>
+    <string name="str_recorder_normal">按住讲话</string>
+    <string name="str_recorder_playing">松开发送</string>
+    <string name="str_recorder_cancel">松开手指，取消发送</string>
+
+
 </resources>

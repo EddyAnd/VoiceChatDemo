@@ -6,8 +6,13 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.Button;
 
+import com.example.vociechatdemo.R;
+
 @SuppressLint("AppCompatCustomView")
 public class RecorderButton extends Button {
+
+
+    private static final int MAX_HEIGHT = 50;
     private static final int STATE_NORMAL = 1;
     private static final int STATE_RECORDING = 2;
     private static final int STATE_CANCEL = 3;
@@ -31,6 +36,7 @@ public class RecorderButton extends Button {
          int y = (int) event.getY();
          switch (action){
                  case MotionEvent.ACTION_DOWN:
+                     isRecording = true;
                      changeState(STATE_RECORDING);
                  break;
                  case MotionEvent.ACTION_MOVE:
@@ -63,6 +69,7 @@ public class RecorderButton extends Button {
      */
     private void reSet() {
      isRecording = false;
+        changeState(STATE_NORMAL);
     }
 
 
@@ -73,9 +80,40 @@ public class RecorderButton extends Button {
      * @return
      */
     private boolean wantToCancel(int x, int y) {
+        if(x < 0 || x > getWidth() ){
+
+            return true;
+        }
+
+        if(y <  -MAX_HEIGHT || y > getHeight()+MAX_HEIGHT){
+            return true;
+        }
+
         return false;
     }
 
-    private void changeState(int stateNormal) {
+    private void changeState(int state) {
+        if(mCurrentState != state){
+            mCurrentState = state;
+            switch (state){
+                case STATE_NORMAL:
+                    setBackground(getResources().getDrawable(R.drawable.btn_recorder_normal));
+                    setText(R.string.str_recorder_normal);
+                    //TODO:Dialog.dismiss()
+                    break;
+                case STATE_RECORDING:
+                    //TODO:Dialog.show()
+                    setBackground(getResources().getDrawable(R.drawable.btn_recording));
+                    setText(R.string.str_recorder_playing);
+
+                    break;
+                case STATE_CANCEL:
+                    setBackground(getResources().getDrawable(R.drawable.btn_recording));
+                    setText(R.string.str_recorder_cancel);
+                    break;
+                    default:
+                        break;
+            }
+        }
     }
 }

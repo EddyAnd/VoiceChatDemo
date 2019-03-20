@@ -75,10 +75,6 @@ public class DialogManager {
 
     public void updateVoiceLevel(int level){
         if(mDialog != null && mDialog.isShowing()){
-            mMicrophone.setVisibility(View.VISIBLE);
-            mVoice.setVisibility(View.VISIBLE);
-            mShowState.setVisibility(View.VISIBLE);
-
            int resId = mContext.getResources().getIdentifier("v"+level,"mipmap",mContext.getPackageName());
            mVoice.setImageResource(resId);
         }

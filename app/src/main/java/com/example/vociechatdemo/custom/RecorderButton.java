@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Button;
 
 import com.example.vociechatdemo.R;
@@ -18,14 +19,24 @@ public class RecorderButton extends Button {
     private static final int STATE_CANCEL = 3;
     private int mCurrentState = STATE_NORMAL;
     private boolean isRecording = false;
-
+    private DialogManager mDialogManager;
     public RecorderButton(Context context) {
         super(context);
-
+        mDialogManager = new DialogManager(context);
     }
 
     public RecorderButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mDialogManager = new DialogManager(getContext());
+        setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                //TODO:真正显示应该在audio end prepared 以后
+                mDialogManager.showRecordingDialog();
+                isRecording = true;
+                return false;
+            }
+        });
     }
 
     @Override
@@ -69,7 +80,7 @@ public class RecorderButton extends Button {
      */
     private void reSet() {
      isRecording = false;
-        changeState(STATE_NORMAL);
+     changeState(STATE_NORMAL);
     }
 
 
@@ -99,17 +110,20 @@ public class RecorderButton extends Button {
                 case STATE_NORMAL:
                     setBackground(getResources().getDrawable(R.drawable.btn_recorder_normal));
                     setText(R.string.str_recorder_normal);
-                    //TODO:Dialog.dismiss()
+                    mDialogManager.dismissDialog();
                     break;
                 case STATE_RECORDING:
-                    //TODO:Dialog.show()
+
                     setBackground(getResources().getDrawable(R.drawable.btn_recording));
                     setText(R.string.str_recorder_playing);
-
+                    if(isRecording){
+                        mDialogManager.recording();
+                    }
                     break;
                 case STATE_CANCEL:
                     setBackground(getResources().getDrawable(R.drawable.btn_recording));
                     setText(R.string.str_recorder_cancel);
+                    mDialogManager.wantToCancel();
                     break;
                     default:
                         break;

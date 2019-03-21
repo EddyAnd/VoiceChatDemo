@@ -12,11 +12,21 @@ import android.os.Message;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
 import com.example.vociechatdemo.R;
+import com.example.vociechatdemo.ui.MainActivity;
+
+import java.io.File;
+import java.util.Timer;
+
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
+
+import static java.security.AccessController.getContext;
 
 @SuppressLint("AppCompatCustomView")
 public class RecorderButton extends Button implements AudioManager.AudioStateListener{
@@ -31,30 +41,32 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
     //是否触发longClick
     private boolean mReady = false;
     private DialogManager mDialogManager;
-    private AudioManager mAudioMananger;
+    private AudioManager mAudioManager;
     private float mTime;
+    private  Context mContext;
     public RecorderButton(Context context) {
         this(context,null);
     }
 
     public RecorderButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         mDialogManager = new DialogManager(getContext());
-        String dir = Environment.getExternalStorageState()+"/imooc_recorder_audios";
-        mAudioMananger = AudioManager.getInstance(dir);
-        mAudioMananger.setAudioStateListener(this);
+     String dir = Environment.getExternalStorageState()+"/imooc_recorder_audios";
+        mAudioManager = AudioManager.getInstance(dir);
+      mAudioManager.setAudioStateListener(this);
         setOnLongClickListener(new OnLongClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public boolean onLongClick(View v) {
                 mReady = true;
-                //动态申请RECORDER_AUDIO权限
-                mAudioMananger.prepareAudio();
-                //verifyAudioPermissions(context.getA());
+               mAudioManager.prepareAudio();
                 return false;
             }
         });
     }
+
+
 
     //录音完成后的回调
     public interface AudioFinishRecorderListener{
@@ -92,19 +104,18 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
                          reSet();
                          return super.onTouchEvent(event);
                      }
-
                      if(!isRecording || mTime < 0.6f){
                          mDialogManager.tooShort();
-                         mAudioMananger.cancel();
+                        mAudioManager.cancel();
                          mHandler.sendEmptyMessageDelayed(MSG_DIALOG_DIMISS,1300);
                      }else if(mCurrentState == STATE_RECORDING){
-                        mAudioMananger.release();
+                      mAudioManager.release();
                         if(mListener != null){
-                            mListener.onFinish(mTime,mAudioMananger.getCurrentFilePath());
+                           mListener.onFinish(mTime,mAudioManager.getCurrentFilePath());
                         }
-                  }else if(mCurrentState == STATE_CANCEL){
-                     mAudioMananger.cancel();
-                  }
+                      }else if(mCurrentState == STATE_CANCEL){
+                       mAudioManager.cancel();
+                          }
                   reSet();
                  break;
                  default:
@@ -145,24 +156,8 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
         return false;
     }
 
-    private static final int GET_RECODE_AUDIO = 1;
-    private static String[] PERMISSION_AUDIO = {
-            Manifest.permission.RECORD_AUDIO
-    };
 
-    /*
-     * 申请录音权限*/
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public  void verifyAudioPermissions(Activity activity) {
-        int permission = ActivityCompat.checkSelfPermission(activity,
-                Manifest.permission.RECORD_AUDIO);
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, PERMISSION_AUDIO,
-                    GET_RECODE_AUDIO);
-        }else {
 
-        }
-    }
 
 
 
@@ -176,7 +171,6 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
                     mDialogManager.dismissDialog();
                     break;
                 case STATE_RECORDING:
-
                     setBackground(getResources().getDrawable(R.drawable.btn_recording));
                     setText(R.string.str_recorder_playing);
                     if(isRecording){
@@ -193,6 +187,22 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
             }
         }
     }
+
+
+    Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            while (isRecording){
+                try {
+                    Thread.sleep(100);
+                    mTime+= 0.1f;
+                    mHandler.sendEmptyMessage(MSG_VOICE_CHANGED);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
     private static final int MSG_AUDIO_PREPARED = 0X110;
     private static final int MSG_VOICE_CHANGED = 0X111;
     private static final int MSG_DIALOG_DIMISS= 0X112;
@@ -203,23 +213,11 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
                 case MSG_AUDIO_PREPARED:
                     mDialogManager.showRecordingDialog();
                     isRecording = true;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(100);
-                                mTime+= 0.1f;
-                                mHandler.sendEmptyMessage(MSG_VOICE_CHANGED);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-
-                        }
-                    }).start();
+                    new Thread(mRunnable).start();
                     break;
                 case MSG_VOICE_CHANGED:
-mDialogManager.updateVoiceLevel(mAudioMananger.getVoiceLevel(7));
+
+                  mDialogManager.updateVoiceLevel(mAudioManager.getVoiceLevel(7));
                     break;
 
                 case MSG_DIALOG_DIMISS:
@@ -235,6 +233,6 @@ mDialogManager.updateVoiceLevel(mAudioMananger.getVoiceLevel(7));
 
     @Override
     public void wellPrepared() {
-
+      mHandler.sendEmptyMessage(MSG_AUDIO_PREPARED);
     }
 }

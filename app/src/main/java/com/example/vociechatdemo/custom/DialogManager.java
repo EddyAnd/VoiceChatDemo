@@ -39,8 +39,8 @@ public class DialogManager {
             mVoice.setVisibility(View.VISIBLE);
             mShowState.setVisibility(View.VISIBLE);
 
-            mMicrophone.setImageResource(R.mipmap.cancel);
-            mShowState.setText("松开手指，取消发送");
+            mMicrophone.setImageResource(R.mipmap.recorder);
+            mShowState.setText("手指上滑，取消发送");
         }
     }
 
@@ -75,7 +75,7 @@ public class DialogManager {
 
     public void updateVoiceLevel(int level){
         if(mDialog != null && mDialog.isShowing()){
-           int resId = mContext.getResources().getIdentifier("v"+level,"mipmap",mContext.getPackageName());
+           int resId = mContext.getResources().getIdentifier("v"+level,"drawable",mContext.getPackageName());
            mVoice.setImageResource(resId);
         }
     }

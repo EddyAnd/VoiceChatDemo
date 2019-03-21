@@ -2,7 +2,9 @@ package com.example.vociechatdemo.custom;
 
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,28 +50,25 @@ public class AudioManager {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void prepareAudio(){
         isPrepared = false;
-        File dir = new File(mDir);
-        if(!dir.exists()){
-            dir.mkdirs();
-        }
-        String fileName = generateFileName();
-        File file = new File(dir,fileName);
-        mCurrentFilePath = file.getAbsolutePath();
+        mCurrentFilePath =  Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+generateFileName();
+        Log.e("====mCurrentFilePath===",mCurrentFilePath);
         mMediaRecorder = new MediaRecorder();
-        mMediaRecorder.setOutputFile(mCurrentFilePath);
-        //设置音频源为麦克风
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        //设置音频的格式
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
-        //设置音频的编码为amr
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
         try {
+            mMediaRecorder.setOutputFile(mCurrentFilePath);
+            //设置音频源为麦克风
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            //设置音频的格式
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
+            //设置音频的编码为amr
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mMediaRecorder.prepare();
+            mMediaRecorder.start();
         } catch (IOException e) {
             e.printStackTrace();
+            Log.e("====11111==e==",e.toString());
         }
 
-        mMediaRecorder.start();
+
         //准备结束
         isPrepared = true;
 
@@ -85,7 +84,7 @@ public class AudioManager {
     }
 
     public int getVoiceLevel(int maxLevel){
-        if(isPrepared){
+        if(isPrepared && mMediaRecorder != null){
             return (maxLevel*mMediaRecorder.getMaxAmplitude()/32768+1);
         }
         return 1;
@@ -93,14 +92,14 @@ public class AudioManager {
 
 
     public void release(){
-        mMediaRecorder.stop();
-        mMediaRecorder.release();
-        mMediaRecorder = null;
+        if(mMediaRecorder != null) {
+            mMediaRecorder.stop();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+        }
     }
 
     public void cancel(){
-
-
         release();
         if(mCurrentFilePath != null) {
             File file = new File(mCurrentFilePath);

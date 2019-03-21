@@ -50,7 +50,14 @@ public class AudioManager {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void prepareAudio(){
         isPrepared = false;
-        mCurrentFilePath =  Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+generateFileName();
+        File destDir = new File(mDir);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        String fileName = generateFileName();
+        File file = new File(destDir,fileName);
+        mCurrentFilePath = file.getAbsolutePath();
         Log.e("====mCurrentFilePath===",mCurrentFilePath);
         mMediaRecorder = new MediaRecorder();
         try {

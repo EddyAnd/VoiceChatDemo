@@ -52,9 +52,9 @@ public class RecorderButton extends Button implements AudioManager.AudioStateLis
         super(context, attrs);
         mContext = context;
         mDialogManager = new DialogManager(getContext());
-     String dir = Environment.getExternalStorageState()+"/imooc_recorder_audios";
+     String dir =  Environment.getExternalStorageDirectory()+"/imooc_recorder_audios";
         mAudioManager = AudioManager.getInstance(dir);
-      mAudioManager.setAudioStateListener(this);
+        mAudioManager.setAudioStateListener(this);
         setOnLongClickListener(new OnLongClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
